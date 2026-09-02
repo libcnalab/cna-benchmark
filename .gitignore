@@ -1,0 +1,19 @@
+# Build trees. The names are fixed by the openeggbert build rules: a build directory is reused
+# across sessions, never created per ticket, per date or per branch.
+build/
+build-asan/
+build-ubsan/
+build-tsan/
+build-probe/
+build-consumer/
+cmake-build-*/
+
+# Result documents a run writes into the working directory.
+cna-benchmark-result.json
+results/
+
+# Editor and OS leftovers.
+.idea/
+.vscode/
+*.swp
+.DS_Store
