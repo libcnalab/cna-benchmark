@@ -22,7 +22,7 @@ fi
 binary="${build_dir}/cna-benchmark"
 if [[ ! -x "${binary}" ]]; then
     echo "run-all-renderers: ${binary} is not an executable. Build it first:" >&2
-    echo "  cmake --build ${build_dir} --target cna-benchmark -j\$(nproc)" >&2
+    echo "  cmake --build ${build_dir} --target cna-benchmark --parallel 8" >&2
     exit 1
 fi
 

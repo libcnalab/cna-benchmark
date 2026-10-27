@@ -16,7 +16,8 @@ handful of CNAEXT accessors that report which renderer is running and what it su
 renderer-specific code path exists anywhere in it, which is what makes a comparison between two
 renderers a comparison of the renderers.
 
-It consumes the **`cnanext`** and **`sharp-runtimenext`** development lines of both projects.
+It consumes CNA and sharp-runtime checkouts selected by CMake. The default prefers the
+`cnanext` / `sharp-runtimenext` siblings when present, then the `../../libcna` checkouts.
 
 ---
 
@@ -42,8 +43,8 @@ non-comparable — a partial run is a perfectly good measurement and a meaningle
 
 ## Building
 
-Requires CMake 3.21+, a C++23 compiler, SDL3, and sibling checkouts of `cnanext` and
-`sharp-runtimenext`:
+Requires CMake 3.21+, a C++23 compiler, SDL3, and CNA and sharp-runtime checkouts. The default
+layout is either:
 
 ```
 <parent>/
@@ -52,9 +53,11 @@ Requires CMake 3.21+, a C++23 compiler, SDL3, and sibling checkouts of `cnanext`
   cna-benchmark/      <- this repository
 ```
 
+or `libcnalab/cna-benchmark` beside `libcna/{cna,sharp-runtime}`.
+
 ```bash
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build --target cna-benchmark -j$(nproc)
+cmake --build build --target cna-benchmark --parallel 8
 ```
 
 Release matters. A Debug build measures the optimiser, not the renderer.
@@ -67,20 +70,20 @@ Point the build elsewhere with `-DCNA_ROOT_DIR=...` and
 By default the binary carries five:
 
 ```
-OPENGLES3  SDL_RENDERER  SOFTWARE  HEADLESS  STUB
+OPENGLES3  SDL_GPU  SOFTWARE  HEADLESS  STUB
 ```
 
 which is what a stock desktop checkout can build with no extra SDKs, and spans the interesting
-classes: a real GPU renderer, a native 2D renderer, a CPU rasterizer, and the two no-output
+classes: two GPU renderers, a CPU rasterizer, and the two no-output
 renderers that isolate CNA's own CPU cost from any drawing at all.
 
 ```bash
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-  -DCNA_BENCHMARK_RENDERERS="OPENGL33;VULKAN;BGFX;SOFTWARE"
+  -DCNA_BENCHMARK_RENDERERS="OPENGL33;SDL_GPU;SOFTWARE"
 ```
 
 The **first** entry is the build default. Only one OpenGL-profile identity may appear —
-`OPENGLES2`, `OPENGLES3`, `OPENGL33`, `WEBGL1` and `WEBGL2` are served by one implementation
+`OPENGLES3`, `OPENGL33` and `WEBGL2` are served by one implementation
 family and cannot be compiled twice into the same binary. CNA rejects an impossible combination
 at configure time and says why.
 
@@ -227,13 +230,13 @@ The machine name is **not** recorded unless `--include-host` is given.
 ## Tests
 
 ```bash
-ctest --test-dir build --output-on-failure
+<CNA_ROOT_DIR>/tools/platform/run_gpu_tests_private.sh build --output-on-failure
 ```
 
-Argument handling, the two listing commands, rejection of bad input, a complete end-to-end run on
-a renderer that needs no GPU and no window, and a structural check of the result document it
-produces. Deliberately no test asserts a performance number: the machine a test runs on is not the
-machine a score is calibrated for.
+Argument handling, the two listing commands, rejection of bad input, an end-to-end run on a
+renderer that needs no GPU and no window, a repeated streaming upload on HEADLESS, and a structural
+check of the result document. Deliberately no test asserts a performance number: the machine a
+test runs on is not the machine a score is calibrated for.
 
 ---
 

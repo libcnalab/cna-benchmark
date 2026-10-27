@@ -169,6 +169,7 @@ namespace CnaBenchmark
                                   static_cast<std::uint8_t>(255));
                     }
                 }
+                device.getTexturesProperty()(0, nullptr);
                 texture_->SetData(pixels_.data(), static_cast<int>(pixels_.size()));
 
                 // --- Dynamic vertex path ------------------------------------------------

@@ -5,15 +5,15 @@ how the score is computed.
 
 ## Build rules
 
-The openeggbert build rules in the parent directory's `CLAUDE.md` apply in full: reuse `build/`,
-never build in the scratchpad or under `/tmp`, always pass ccache, and use the whole machine.
+Reuse `build/`, keep build trees outside `/tmp`, and use ccache when available. CNA's build rule
+limits compilation to at most eight parallel jobs.
 
 Configuring this project builds the whole of CNA and sharp-runtime, so a discarded build tree is
 expensive. There is one build directory:
 
 ```bash
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build --target cna-benchmark -j$(nproc)
+cmake --build build --target cna-benchmark --parallel 8
 ```
 
 ccache is on by default here (`CNA_BENCHMARK_USE_CCACHE`), and the project sets
@@ -23,10 +23,12 @@ Release, not Debug. A Debug build of a benchmark measures the optimiser.
 
 ## Upstream checkouts
 
-This project consumes the **next** development lines, as siblings:
+This project prefers the **next** development lines, as siblings, and falls back to the current
+`../../libcna` checkouts:
 
-- `../cnanext` — override with `-DCNA_ROOT_DIR`
-- `../sharp-runtimenext` — override with `-DCNA_BENCHMARK_SHARP_RUNTIME_ROOT`
+- `../cnanext` or `../../libcna/cna` — override with `-DCNA_ROOT_DIR`
+- `../sharp-runtimenext` or `../../libcna/sharp-runtime` — override with
+  `-DCNA_BENCHMARK_SHARP_RUNTIME_ROOT`
 
 Both are separate git checkouts, not submodules.
 
@@ -60,7 +62,7 @@ composite, so it needs a new reference-profile id.
 ## Tests
 
 ```bash
-DISPLAY=:0 ctest --test-dir build --output-on-failure
+<CNA_ROOT_DIR>/tools/platform/run_gpu_tests_private.sh build --output-on-failure
 ```
 
 Structural only. No test asserts a performance number — the machine a test runs on is not the

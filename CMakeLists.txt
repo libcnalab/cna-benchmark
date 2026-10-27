@@ -25,25 +25,32 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # --- Sibling checkouts -------------------------------------------------------------------
 #
-# The "next" development lines of both projects, per this suite's stated target. Both are
-# ordinary sibling git checkouts, not submodules.
+# Prefer the original sibling development checkouts when present. The current CNA tree also
+# lives beside this lab repository under ../../libcna.
 
-set(CNA_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../cnanext" CACHE PATH
+set(_cna_benchmark_default_cna_root "${CMAKE_CURRENT_SOURCE_DIR}/../cnanext")
+if(NOT EXISTS "${_cna_benchmark_default_cna_root}/CMakeLists.txt")
+    set(_cna_benchmark_default_cna_root "${CMAKE_CURRENT_SOURCE_DIR}/../../libcna/cna")
+endif()
+set(_cna_benchmark_default_sharp_runtime_root "${CMAKE_CURRENT_SOURCE_DIR}/../sharp-runtimenext")
+if(NOT EXISTS "${_cna_benchmark_default_sharp_runtime_root}/CMakeLists.txt")
+    set(_cna_benchmark_default_sharp_runtime_root
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../libcna/sharp-runtime")
+endif()
+set(CNA_ROOT_DIR "${_cna_benchmark_default_cna_root}" CACHE PATH
     "Path to the CNA framework checkout consumed by this benchmark")
-set(CNA_BENCHMARK_SHARP_RUNTIME_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../sharp-runtimenext" CACHE PATH
+set(CNA_BENCHMARK_SHARP_RUNTIME_ROOT "${_cna_benchmark_default_sharp_runtime_root}" CACHE PATH
     "Path to the sharp-runtime checkout CNA and this benchmark consume")
 
 if(NOT EXISTS "${CNA_ROOT_DIR}/CMakeLists.txt")
     message(FATAL_ERROR
         "CNA was not found at '${CNA_ROOT_DIR}'.\n"
-        "Clone https://github.com/openeggbert/cna next to this repository, or point "
-        "-DCNA_ROOT_DIR at an existing checkout.")
+        "Point -DCNA_ROOT_DIR at an existing CNA checkout.")
 endif()
 if(NOT EXISTS "${CNA_BENCHMARK_SHARP_RUNTIME_ROOT}/CMakeLists.txt")
     message(FATAL_ERROR
         "sharp-runtime was not found at '${CNA_BENCHMARK_SHARP_RUNTIME_ROOT}'.\n"
-        "Clone https://github.com/openeggbert/sharp-runtime next to this repository, or point "
-        "-DCNA_BENCHMARK_SHARP_RUNTIME_ROOT at an existing checkout.")
+        "Point -DCNA_BENCHMARK_SHARP_RUNTIME_ROOT at an existing sharp-runtime checkout.")
 endif()
 
 # --- ccache ------------------------------------------------------------------------------
@@ -71,12 +78,12 @@ endif()
 # a CPU rasterizer, and the two no-output renderers that isolate CNA's own CPU-side cost from
 # any drawing at all.
 #
-# Only ONE OpenGL-profile identity may appear: OPENGLES2/OPENGLES3/OPENGL33/WEBGL1/WEBGL2 are
+# Only ONE OpenGL-profile identity may appear: OPENGLES3/OPENGL33/WEBGL2 are
 # served by one EasyGL implementation family and cannot be compiled twice into one binary.
 # CNA rejects an impossible combination at configure time with a reason -- see
-# cnanext/cmake/RendererCombinations.cmake.
+# CNA's renderer-selection CMake modules.
 
-set(CNA_BENCHMARK_RENDERERS "OPENGLES3;SDL_RENDERER;SOFTWARE;HEADLESS;STUB" CACHE STRING
+set(CNA_BENCHMARK_RENDERERS "OPENGLES3;SDL_GPU;SOFTWARE;HEADLESS;STUB" CACHE STRING
     "Semicolon-separated CNA renderer identities to compile into cna-benchmark. \
 The first entry is the default when --renderer is not given.")
 
@@ -220,9 +227,8 @@ if(CNA_BENCHMARK_BUILD_TESTS)
         set_tests_properties("CnaBenchmarkRejects${_bad_name}" PROPERTIES WILL_FAIL TRUE)
     endforeach()
 
-    # A complete end-to-end run on a renderer that needs no GPU and no window at all: every
-    # scene loads, renders its frames, is scored, and the JSON is written and re-read. This is
-    # the check that a scene's own setup is wrong, and it runs anywhere.
+    # An end-to-end run on a renderer that needs no GPU and no window: supported scenes render,
+    # unsupported scenes are recorded, and the JSON is written and re-read.
     if("STUB" IN_LIST CNA_BENCHMARK_RENDERERS)
         set(_bench_smoke_renderer STUB)
     elseif("HEADLESS" IN_LIST CNA_BENCHMARK_RENDERERS)
@@ -247,6 +253,16 @@ if(CNA_BENCHMARK_BUILD_TESTS)
             set_tests_properties(CnaBenchmarkResultSchema PROPERTIES
                 DEPENDS CnaBenchmarkSmokeRun)
         endif()
+    endif()
+
+    # The STUB smoke run skips the 3D streaming scene. Exercise two consecutive uploads on
+    # HEADLESS so a texture left in a sampler slot after SpriteBatch::End is caught here.
+    if("HEADLESS" IN_LIST CNA_BENCHMARK_RENDERERS)
+        add_test(NAME CnaBenchmarkStreamingUpload
+            COMMAND cna-benchmark
+                --renderer=HEADLESS --scenes=streaming
+                --frames=3 --warmup=1 --workload-scale=0.02 --no-hud --strict --json=)
+        set_tests_properties(CnaBenchmarkStreamingUpload PROPERTIES TIMEOUT 30)
     endif()
 endif()
 
