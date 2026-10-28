@@ -74,9 +74,8 @@ endif()
 # --- Renderer set ------------------------------------------------------------------------
 #
 # The default set is what a stock Linux/desktop checkout can build with no extra SDKs, and it
-# deliberately spans the three interesting classes: a real GPU renderer, a native 2D renderer,
-# a CPU rasterizer, and the two no-output renderers that isolate CNA's own CPU-side cost from
-# any drawing at all.
+# deliberately spans three interesting classes: two GPU renderers, a CPU rasterizer, and the two
+# no-output renderers that isolate CNA's own CPU-side cost from any drawing at all.
 #
 # Only ONE OpenGL-profile identity may appear: OPENGLES3/OPENGL33/WEBGL2 are
 # served by one EasyGL implementation family and cannot be compiled twice into one binary.

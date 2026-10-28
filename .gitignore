@@ -1,5 +1,5 @@
-# Build trees. The names are fixed by the openeggbert build rules: a build directory is reused
-# across sessions, never created per ticket, per date or per branch.
+# Build trees. A build directory is reused across sessions, never created per ticket, per date or
+# per branch.
 build/
 build-asan/
 build-ubsan/

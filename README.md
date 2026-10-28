@@ -1,6 +1,6 @@
 # CNA Benchmark Suite
 
-A 3DMark-style benchmark for [CNA](https://github.com/openeggbert/cna), the C++ reimplementation
+A 3DMark-style benchmark for [CNA](https://github.com/libcna/cna), the C++ reimplementation
 of the XNA 4.0 programming model. It runs seven fixed graphics workloads, scores each against a
 published reference profile, and reduces them to a single number:
 
@@ -18,6 +18,8 @@ renderers a comparison of the renderers.
 
 It consumes CNA and sharp-runtime checkouts selected by CMake. The default prefers the
 `cnanext` / `sharp-runtimenext` siblings when present, then the `../../libcna` checkouts.
+The latest acceptance against current CNA is recorded in
+[`docs/cna-integration.md`](docs/cna-integration.md).
 
 ---
 

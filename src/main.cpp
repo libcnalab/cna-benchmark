@@ -87,7 +87,7 @@ namespace
         {
             std::printf(
                 "\nThis is a single-renderer build. To compare renderers from one binary, "
-                "configure with\n  -DCNA_BENCHMARK_RENDERERS=\"OPENGLES3;SDL_RENDERER;SOFTWARE\"\n"
+                "configure with\n  -DCNA_BENCHMARK_RENDERERS=\"OPENGLES3;SDL_GPU;SOFTWARE\"\n"
                 "and select one per run with --renderer.\n");
         }
         else
